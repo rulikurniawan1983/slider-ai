@@ -1,9 +1,10 @@
-import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/database/client";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     Credentials({
       name: "credentials",
@@ -43,14 +44,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           image: user.image,
           role: user.role,
-        };
+        } as any;
       },
     }),
   ],
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
-        token.id = user.id;
+        token.id = (user as any).id;
         token.role = (user as any).role;
       }
       return token;
@@ -64,12 +65,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
+    signIn: "/signin",
+    error: "/signin",
   },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+export function auth() {
+  return getServerSession(authOptions);
+}
