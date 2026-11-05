@@ -1,49 +1,34 @@
 "use client";
 
-import * as React from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { Sun, Moon, Settings, Bell } from "lucide-react";
+
+const titles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/chat": "Chat",
+  "/agents": "Agen",
+  "/documents": "Dokumen",
+  "/settings": "Pengaturan",
+  "/admin": "Admin",
+};
 
 export default function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const title = Object.entries(titles).find(([k]) => pathname.startsWith(k))?.[1] ?? "Slider AI";
+  const name = session?.user?.name || session?.user?.email || "Pengguna";
+  const initial = (name[0] || "U").toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 h-16 border-b border-background bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <button className="md:hidden p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-            <span className="sr-only">Open sidebar</span>
-            <div className="w-6 h-0.5 bg-current rounded-sm" />
-            <div className="w-6 h-0.5 bg-current rounded-sm mt-1.5" />
-            <div className="w-6 h-0.5 bg-current rounded-sm mt-1.5" />
-          </button>
-          <span className="hidden md:block text-sm font-medium text-muted-foreground">
-            {pathname.split("/")[1] || "Dashboard"}
-          </span>
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
+      <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+      <div className="flex items-center gap-3">
+        <div className="hidden sm:block text-right">
+          <p className="text-sm font-medium leading-none">{name}</p>
+          <p className="text-xs text-muted-foreground mt-1">{(session?.user as any)?.role || "User"}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-            <Bell size={20} />
-            <span className="sr-only">Notifications</span>
-          </button>
-          <button className="p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-            <Sun size={20} className="hidden" />
-            <Moon size={20} className="block" />
-            <span className="sr-only">Toggle theme</span>
-          </button>
-          <div className="flex items-center gap-2 pl-4 border-l border-border">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
-              {(session?.user?.name?.charAt(0) || session?.user?.email?.charAt(0) || "U").toUpperCase()}
-            </div>
-            <div className="hidden md:flex flex-col">
-              <p className="text-sm font-medium text-foreground">{session?.user?.name || "Pengguna"}</p>
-              <p className="text-xs text-muted-foreground">
-              {(session as any)?.user?.role || "User"}
-            </p>
-            </div>
-          </div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+          {initial}
         </div>
       </div>
     </header>

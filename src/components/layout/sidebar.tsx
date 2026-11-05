@@ -1,60 +1,46 @@
 "use client";
 
-import * as React from "react";
-import { useSession } from "next-auth/react";
-import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Menu, LayoutDashboard, MessageSquare, Bot, FileText, Settings, ShieldAlert, LogOut, Home } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import { LayoutDashboard, MessageSquare, Bot, FileText, Settings, Shield, LogOut, Sparkles } from "lucide-react";
 
-const navigation = [
+const nav = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Chat", href: "/chat/new", icon: MessageSquare },
-  { name: "Agents", href: "/agents", icon: Bot },
-  { name: "Documents", href: "/documents", icon: FileText },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Agen", href: "/agents", icon: Bot },
+  { name: "Dokumen", href: "/documents", icon: FileText },
+  { name: "Pengaturan", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {
-  const { data: session } = useSession();
   const pathname = usePathname();
-  const router = useRouter();
-
-  const isAdmin =
-    (session as any)?.user?.role === "SUPER_ADMIN" ||
-    (session as any)?.user?.role === "ADMIN";
-
-  const handleLogout = () => {
-    router.push("/auth/signin");
-  };
+  const { data: session } = useSession();
+  const role = (session?.user as any)?.role;
+  const isAdmin = role === "SUPER_ADMIN" || role === "ADMIN";
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-background border-r border-border">
-      <div className="flex items-center justify-between h-16 px-4">
-        <Link href="/dashboard">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
-              S
-            </div>
-            <span className="font-semibold text-lg tracking-tight">Slider AI</span>
-          </div>
-        </Link>
+    <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 border-r border-border bg-card">
+      <div className="flex h-16 items-center gap-2 px-5 border-b border-border">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Sparkles size={16} />
+        </div>
+        <span className="font-semibold tracking-tight">Slider AI</span>
       </div>
-      <nav className="flex-1 p-4 space-y-1">
-        {navigation.map((item) => {
+      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        {nav.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href.split("/").slice(0, 2).join("/")));
           return (
             <Link
-              key={item.name}
+              key={item.href}
               href={item.href}
-              className={React.useMemo(
-                () =>
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors" +
-                  (isActive
-                    ? " bg-primary text-primary-foreground"
-                    : " text-muted-foreground hover:bg-accent hover:text-accent-foreground"),
-                [isActive]
-              )}
+              className={
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+                (active
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground")
+              }
             >
               <Icon size={18} />
               {item.name}
@@ -64,18 +50,26 @@ export default function Sidebar() {
         {isAdmin && (
           <Link
             href="/admin"
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            className={
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+              (pathname.startsWith("/admin")
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground")
+            }
           >
-            <ShieldAlert size={18} />
-            Admin Panel
+            <Shield size={18} />
+            Admin
           </Link>
         )}
       </nav>
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground hover:bg-accent rounded-md cursor-pointer transition-colors" onClick={handleLogout}>
+      <div className="border-t border-border p-3">
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+        >
           <LogOut size={18} />
           Keluar
-        </div>
+        </button>
       </div>
     </aside>
   );
