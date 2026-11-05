@@ -1,93 +1,85 @@
 # Slider AI
 
-Slider AI adalah platform AI Workspace modern yang membantu individu, tim, dan perusahaan bekerja lebih cepat menggunakan AI Assistant, AI Agent, Knowledge Base, dan Workflow Automation dalam satu platform.
+Slider AI adalah platform AI Workspace modern (chat, agen, knowledge base/RAG, dokumen, workspace) berbasis Next.js.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 App Router
-- **Language**: TypeScript
-- **UI**: Tailwind CSS, Shadcn UI
+- **Framework**: Next.js 15.5 (App Router, `output: standalone`)
+- **Language**: TypeScript 5
+- **UI**: React 18, Tailwind CSS 3, PostCSS/Autoprefixer, Framer Motion
 - **Database**: PostgreSQL + pgvector
-- **ORM**: Prisma ORM
-- **Auth**: Auth.js (NextAuth)
-- **AI SDK**: OpenAI SDK, Vercel AI SDK
-- **Embeddings**: OpenAI Embeddings
-- **Vector Search**: pgvector
-- **Storage**: S3 Compatible Storage
+- **ORM**: Prisma 5
+- **Auth**: NextAuth.js v4 (Credentials, JWT) — endpoint `/api/auth/*`, halaman masuk `/signin`
+- **AI**: OpenAI SDK (`openai`)
+- **Storage**: S3-compatible (MinIO/S3) via AWS SDK
 - **Cache**: Redis
-- **Deployment**: Docker, Docker Compose
+- **Runtime**: Node.js >= 20.9
+- **Deployment**: Docker / Docker Compose
 
-## Fitur Utama
+## Prasyarat
 
-1. **AI Chat** - Multiple conversations, streaming response, markdown rendering, code highlighting
-2. **AI Agents** - 7 built-in agents dengan custom tool access
-3. **Knowledge Base** - Upload PDF, DOCX, XLSX, CSV, TXT dengan RAG pipeline
-4. **RAG Engine** - Similarity, semantic, hybrid search with source citation
-5. **Memory System** - Short-term & long-term memory
-6. **Tool System** - Calculator, file search, knowledge search, document readers, data analysis
-7. **Document Center** - Upload, delete, search, preview, folder management
-8. **Workspace** - Per-user workspace isolation
-9. **User Management** - Super Admin, Admin, User roles
-10. **Admin Panel** - Dashboard statistik sistem
+- Node.js >= 20.9, npm
+- PostgreSQL dengan ekstensi `pgvector`, Redis, dan storage S3-compatible (MinIO) — atau gunakan Docker Desktop
+- (Opsional) XAMPP **tidak menggantikan** Postgres+pgvector/Redis/Node; bisa dipakai terpisah, tapi stack ini butuh layanan di atas.
 
-## Struktur Folder
+## Konfigurasi Environment
 
-```
-src/
-  app/          - Next.js App Router pages
-  components/   - React components (ui, chat, dashboard, agents, documents, layout)
-  lib/          - AI, auth, database, rag, memory, tools, storage, utils
-  types/        - TypeScript type definitions
-  hooks/        - Custom React hooks
-prisma/
-  schema.prisma - Database schema
-  migrations/   - Database migrations
-```
-
-## Setup Development
+Salin contoh env dan isi nilai yang sesuai (file `.env` **gitignored**, jangan commit secret):
 
 ```bash
-# Install dependencies
-npm install
-
-# Copy environment variables
 cp .env.example .env
-
-# Generate Prisma client
-npm run db:generate
-
-# Run migrations
-npm run db:migrate
-
-# Start development server
-npm run dev
 ```
 
-## Docker Deployment
+Variabel utama (`.env.example`): `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `DATABASE_URL`, `OPENAI_API_KEY`, `REDIS_URL`, `ENCRYPTION_KEY`, `S3_*`. Untuk dev lokal dengan infra di `localhost`, nilai default contoh sudah sesuai; ganti `NEXTAUTH_SECRET`/`ENCRYPTION_KEY` dan isi `OPENAI_API_KEY`.
+
+## Setup Development (lokal)
 
 ```bash
-docker-compose up -d
+npm install
+npm run db:generate          # prisma generate (juga jalan via postinstall)
+npx prisma migrate deploy    # atau: npm run db:migrate
+npm run dev                  # http://localhost:3000
 ```
 
-## Testing
+Jika `prisma generate` gagal `EPERM` di Windows, tutup proses yang mengunci `query_engine-windows.dll.node` lalu jalankan ulang.
+
+## Production Build
 
 ```bash
-npm test
-npm run test:coverage
+npm run build
+npm start                    # atau jalankan output standalone sesuai deployment
 ```
 
-## Dokumentasi
+## Docker (Docker Desktop)
 
-- `docs/product-architecture.md` - Product Architecture
-- `docs/technical-architecture.md` - Technical Architecture
-- `docs/api-design.md` - API Design
-- `docs/ui-design-spec.md` - UI Design Specification
-- `docs/auth-flow.md` - Authentication Flow
-- `docs/rag-flow.md` - RAG Flow
-- `docs/agent-flow.md` - Agent Flow
-- `docs/security-guide.md` - Security Guide
-- `docs/deployment-guide.md` - Deployment Guide
-- `docs/production-guide.md` - Production Guide
+`docker-compose.yml` menyediakan `nextjs`, `postgres` (pgvector), `redis`, `minio`.
+
+```bash
+# infra saja (Next.js jalan lokal)
+docker compose up -d postgres redis minio
+
+# atau full stack
+docker compose up -d --build
+docker compose exec nextjs npx prisma migrate deploy
+```
+
+Pastikan env/port sesuai mode yang dipakai. Workflow CI/CD: `.github/workflows/deploy.yml` (deploy ke VPS saat push ke `main`).
+
+## Struktur
+
+```
+src/app/        - App Router (pages & API routes)
+src/components/ - UI/fitur (chat, dashboard, agents, documents, layout)
+src/lib/        - auth, database, ai, rag, memory, tools, storage
+src/types/      - TypeScript (termasuk augmentasi NextAuth)
+prisma/         - schema & migrations
+docs/           - arsitektur/flow/panduan
+```
+
+## Catatan
+
+- Halaman masuk: `/signin`. Lindungi secret; rotasi key jika pernah terekspos.
+- Jangan commit `.env` atau API key.
 
 ## License
 
